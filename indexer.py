@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 import json
+import lxml
 
 doc_id = {}
 
@@ -7,11 +8,13 @@ def posting_dict(doc_id: int, tf: float) -> dict:
      return {"doc_id": doc_id, "tf": tf}
 
 def parse_json(path):
-    file = json.load(path)
-    soup = BeautifulSoup(file["content"])
+    with open(path, "r") as read_file: 
+        file = json.load(read_file)
+    soup = BeautifulSoup(file["content"], "lxml")
 
     # single string containing all the text within the html
-    file_content = ' '.join([e for e in soup.recursiveChildGenerator()])
+    file_content = soup.find_all(['p', 'h1', 'h2', 'h3', 'title'], text=True)
+    file_content = ' '.join([e.string for e in file_content])
     return file_content
 
 
