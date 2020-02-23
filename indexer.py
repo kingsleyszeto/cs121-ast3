@@ -57,7 +57,7 @@ def process_dev():
     os.chdir("/Users/kingsleyszeto/Documents/GitHub/cs121-ast3/DEV")
     for f in os.listdir(os.getcwd()):
         if os.path.isdir(f): process_directory(f)
-        break
+
 def clean_print():
     for word in inverted_index:
         print(word)
@@ -66,10 +66,8 @@ def clean_print():
             print(posting)
 
 process_dev()
-clean_print()
-a = sorted(inverted_index.keys(), key=lambda x: len(x))[-1]
-print(a)
-
+# clean_print()
+os.chdir('..')
 with open("doc_id.txt", "w") as file:
     file.write(str(doc_id))
 
