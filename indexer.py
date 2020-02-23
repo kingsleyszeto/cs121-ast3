@@ -1,6 +1,6 @@
 from nltk.stem.porter import *
+from bs4 import BeautifulSoup
 import re
-import bs4
 import json
 
 doc_id = {}
