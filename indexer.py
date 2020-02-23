@@ -69,3 +69,9 @@ process_dev()
 clean_print()
 a = sorted(inverted_index.keys(), key=lambda x: len(x))[-1]
 print(a)
+
+with open("doc_id.txt", "w") as file:
+    file.write(str(doc_id))
+
+with open("inverted_index.txt", "w") as file:
+    file.write(str(inverted_index))
