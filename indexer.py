@@ -1,5 +1,7 @@
 from nltk.stem.porter import *
 import re
+import bs4
+import json
 
 doc_id = {}
 inverted_index = {}
