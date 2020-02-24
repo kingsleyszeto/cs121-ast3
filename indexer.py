@@ -47,8 +47,8 @@ def process_directory(domain: str):
 
 def process_tf_dict(tf: dict, doc_id: int):
     for word in tf:
-        if word in inverted_index: inverted_index[word].append(posting_dict(doc_id, tf[word]))
-        else: inverted_index[word] = [posting_dict(doc_id, tf[word])]
+        if word in inverted_index: inverted_index[word].append(doc_id)#posting_dict(doc_id, tf[word]))
+        else: inverted_index[word] = [doc_id]#[posting_dict(doc_id, tf[word])]
 
 def posting_dict(doc_id: int, tf: float) -> dict:
     return {"doc_id": doc_id, "tf": tf}
@@ -68,8 +68,11 @@ def clean_print():
 process_dev()
 # clean_print()
 os.chdir('..')
-with open("doc_id.txt", "w") as file:
-    file.write(str(doc_id))
+with open("doc_id.txt", "w") as f:
+    f.write(str(doc_id))
 
-with open("inverted_index.txt", "w") as file:
-    file.write(str(inverted_index))
+with open("inverted_index.txt", "w") as f:
+    for index in inverted_index:
+        temp = {}
+        temp[index] = inverted_index[index]
+        print(str(temp), file=f)
