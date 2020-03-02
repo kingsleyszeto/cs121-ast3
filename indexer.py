@@ -37,6 +37,7 @@ def parse_json(path):
     return file_content
 
 def process_directory(domain: str):
+    print(domain)
     os.chdir(os.getcwd() + "/" + domain)
     for site in os.listdir(os.getcwd()):
         current_id = len(doc_id)
@@ -55,7 +56,8 @@ def posting_dict(doc_id: int, tf: float) -> dict:
     return {"id": doc_id, "tf": tf}
 
 def process_dev():
-    os.chdir("/Users/kingsleyszeto/Documents/GitHub/cs121-ast3/DEV")
+    os.chdir("/Users/bryanly/Documents/UCI Brilliant Future/CS 121/cs121-ast3/DEV")
+    #os.chdir("/Users/kingsleyszeto/Documents/GitHub/cs121-ast3/DEV")
     for f in os.listdir(os.getcwd()):
         if os.path.isdir(f): process_directory(f)
 
@@ -73,9 +75,9 @@ def write_index():
         word_index[index] = index_count
         temp = {}
         temp[index] = inverted_index[index]
-        with open("inverted_index" + str(index_count) +".txt", "w") as f:
-            f.write(str(temp) + "\n")
-        if os.path.getsize("inverted_index" + str(index_count) +".txt") > 50000000:
+        with open("indexes/inverted_index" + str(index_count) +".txt", "a") as f:
+            f.write(str(temp))
+        if os.path.getsize("indexes/inverted_index" + str(index_count) +".txt") > 50000000:
             index_count += 1
     with open("word_index.txt", "w") as f:
         f.write(str(word_index))
