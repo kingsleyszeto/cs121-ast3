@@ -60,6 +60,7 @@ def process_dev():
     #os.chdir("/Users/kingsleyszeto/Documents/GitHub/cs121-ast3/DEV")
     for f in os.listdir(os.getcwd()):
         if os.path.isdir(f): process_directory(f)
+        break
 
 def clean_print():
     for word in inverted_index:
@@ -75,14 +76,20 @@ def write_index():
         word_index[index] = index_count
         temp = {}
         temp[index] = inverted_index[index]
-        with open("indexes/inverted_index" + str(index_count) +".txt", "a") as f:
-            f.write(str(temp))
+        with open("indexes/inverted_index" + str(index_count) + ".txt", "a") as f:
+            f.write(str(temp) + "\n")
         if os.path.getsize("indexes/inverted_index" + str(index_count) +".txt") > 50000000:
             index_count += 1
     with open("word_index.txt", "w") as f:
         f.write(str(word_index))
         
-        
+
+temp_index_count = 1
+while(os.path.exists("indexes/inverted_index" + str(temp_index_count) + ".txt")):
+    os.remove("indexes/inverted_index" + str(temp_index_count) + ".txt")
+    temp_index_count += 1
+
+
 process_dev()
 os.chdir('..')
 with open("doc_id.txt", "w") as f:
