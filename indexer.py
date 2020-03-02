@@ -71,24 +71,33 @@ def clean_print():
 
 def write_index():
     index_count = 1
+    word_count = 1
     word_index = {}
     for index in inverted_index:
-        word_index[index] = index_count
+        word_index[index] = (index_count, word_count)
         temp = {}
         temp[index] = inverted_index[index]
         with open("indexes/inverted_index" + str(index_count) + ".txt", "a") as f:
             f.write(str(temp) + "\n")
         if os.path.getsize("indexes/inverted_index" + str(index_count) +".txt") > 50000000:
             index_count += 1
-    with open("word_index.txt", "w") as f:
-        f.write(str(word_index))
-        
+            word_count = 1
+        else:
+            word_count += 1
+    
+    with open("word_index.txt", "a") as f:
+        f.write("{")
+        for word in word_index:
+            f.write("\'" + word + "\': " + str(word_index[word]) + ",\n")
+        f.write("}")  
 
 temp_index_count = 1
 while(os.path.exists("indexes/inverted_index" + str(temp_index_count) + ".txt")):
     os.remove("indexes/inverted_index" + str(temp_index_count) + ".txt")
     temp_index_count += 1
 
+if os.path.exists("word_index.txt"):
+    os.remove("word_index.txt")
 
 process_dev()
 os.chdir('..')
