@@ -1,4 +1,5 @@
 from nltk.stem.porter import *
+from nltk.tokenize import word_tokenize
 from bs4 import BeautifulSoup
 import re
 import json
@@ -11,9 +12,9 @@ porter = PorterStemmer()
 
 # returns a list of tf's for each word in the document
 def process_words(document: str) -> dict:
-    document = re.sub(r'[^A-Za-z0-9]+', ' ', document).replace('\n', ' ').replace('\t', ' ').replace('\r',' ').lower().split()
-    num_words = len(document)
+    document = word_tokenize(document.lower())
     stemmed_words = [porter.stem(word) for word in document]
+    num_words = len(stemmed_words)
     tf = {}
     for word in stemmed_words:
         if word in tf: tf[word] += 1 
@@ -47,11 +48,11 @@ def process_directory(domain: str):
 
 def process_tf_dict(tf: dict, doc_id: int):
     for word in tf:
-        if word in inverted_index: inverted_index[word].append(doc_id)#posting_dict(doc_id, tf[word]))
-        else: inverted_index[word] = [doc_id]#[posting_dict(doc_id, tf[word])]
+        if word in inverted_index: inverted_index[word].append(posting_dict(doc_id, tf[word]))
+        else: inverted_index[word] = [posting_dict(doc_id, tf[word])]
 
 def posting_dict(doc_id: int, tf: float) -> dict:
-    return {"doc_id": doc_id, "tf": tf}
+    return {"id": doc_id, "tf": tf}
 
 def process_dev():
     os.chdir("/Users/kingsleyszeto/Documents/GitHub/cs121-ast3/DEV")
@@ -66,7 +67,6 @@ def clean_print():
             print(posting)
 
 process_dev()
-# clean_print()
 os.chdir('..')
 with open("doc_id.txt", "w") as f:
     f.write(str(doc_id))
