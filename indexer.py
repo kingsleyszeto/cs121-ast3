@@ -66,13 +66,24 @@ def clean_print():
             print('\t', end = "")
             print(posting)
 
+def write_index():
+    index_count = 1
+    word_index = {}
+    for index in inverted_index:
+        word_index[index] = index_count
+        temp = {}
+        temp[index] = inverted_index[index]
+        with open("inverted_index" + str(index_count) +".txt", "w") as f:
+            f.write(str(temp) + "\n")
+        if os.path.getsize("inverted_index" + str(index_count) +".txt") > 50000000:
+            index_count += 1
+    with open("word_index.txt", "w") as f:
+        f.write(str(word_index))
+        
+        
 process_dev()
 os.chdir('..')
 with open("doc_id.txt", "w") as f:
     f.write(str(doc_id))
 
-with open("inverted_index.txt", "w") as f:
-    for index in inverted_index:
-        temp = {}
-        temp[index] = inverted_index[index]
-        print(str(temp), file=f)
+write_index()
