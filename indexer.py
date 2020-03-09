@@ -5,6 +5,7 @@ import re
 import json
 import lxml
 import os
+import sys
 
 doc_id = []
 inverted_index = {}
@@ -49,8 +50,10 @@ def process_directory(domain: str):
 
 def process_tf_dict(tf: dict, doc_id: int):
     for word in tf:
-        if word in inverted_index: inverted_index[word].append(posting_dict(doc_id, tf[word]))
-        else: inverted_index[word] = [posting_dict(doc_id, tf[word])]
+        if word in inverted_index:
+            inverted_index[word].append(posting_dict(doc_id, tf[word]))
+        else:
+            inverted_index[word] = [posting_dict(doc_id, tf[word])]
 
 def posting_dict(doc_id: int, tf: float) -> dict:
     return {"id": doc_id, "tf": tf}
@@ -68,6 +71,30 @@ def clean_print():
         for posting in inverted_index[word]:
             print('\t', end = "")
             print(posting)
+
+# sorts and writes partial index to a file and clears the dictionary
+def write_partial_index(partial_index_count: int):
+    with open("indexes/partial_index" + str(partial_index_count) + ".txt", "a") as f:
+        f.write("{")
+        for word in sorted(inverted_index):
+            f.write("\'" + word + "\': " + str(inverted_index[word]) + ",\n")
+        f.write("}")
+    partial_index_count += 1
+    inverted_index.clear()
+
+# returns a list of the paths to all the partial indices
+def get_indices():
+    indices = []
+    temp_partial_index_count = 1
+    while(os.path.exists("indexes/partial_index" + str(temp_partial_index_count) + ".txt")):
+        indices.append("indexes/partial_index" + str(temp_partial_index_count) + ".txt")
+        temp_partial_index_count += 1
+    return indices
+
+# merges all the partial indicies into a set of alphabetically organized indices
+def merge_index():
+    alphabetic_index = {}
+    partial_index_list = get_indices()
 
 def write_index():
     index_count = 1
@@ -91,11 +118,19 @@ def write_index():
             f.write("\'" + word + "\': " + str(word_index[word]) + ",\n")
         f.write("}")  
 
+
+# deletes the contents of indexes/ before running
 temp_index_count = 1
 while(os.path.exists("indexes/inverted_index" + str(temp_index_count) + ".txt")):
     os.remove("indexes/inverted_index" + str(temp_index_count) + ".txt")
     temp_index_count += 1
 
+temp_partial_index_count = 1
+while(os.path.exists("indexes/partial_index" + str(temp_partial_index_count) + ".txt")):
+    os.remove("indexes/partial_index" + str(temp_partial_index_count) + ".txt")
+    temp_partial_index_count += 1
+
+# deletes word_index before running
 if os.path.exists("word_index.txt"):
     os.remove("word_index.txt")
 
