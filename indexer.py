@@ -1,12 +1,14 @@
-from nltk.stem.porter import *
+from nltk.stem.porter import PorterStemmer
 from nltk.tokenize import word_tokenize
 from bs4 import BeautifulSoup
 import re
 import json
 import lxml
 import os
-import sys
+import math
+import pprint
 
+LETTERS = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", ""]
 doc_id = []
 inverted_index = {}
 porter = PorterStemmer()
@@ -15,15 +17,16 @@ porter = PorterStemmer()
 def process_words(document: str) -> dict:
     document = word_tokenize(document.lower())
     stemmed_words = [porter.stem(word) for word in document]
-    num_words = len(stemmed_words)
     tf = {}
     for word in stemmed_words:
         if word in tf: tf[word] += 1 
         else: tf[word] = 1
-    for word in tf: tf[word] = tf[word] / num_words
+    for word in tf: tf[word] = math.log(tf[word]) + 1
     return tf
 
-def parse_json(path):
+# function that parses a json file and extracts all the words
+# returns the document in one large string.
+def parse_json(path) -> str:
     with open(path, "r") as read_file: 
         file = json.load(read_file)
     soup = BeautifulSoup(file["content"], "lxml")
@@ -37,34 +40,43 @@ def parse_json(path):
     file_content = soup.get_text(" ")
     return file_content
 
+# process the directory of the dev file
 def process_directory(domain: str):
     print(domain)
     os.chdir(os.getcwd() + "/" + domain)
     for site in os.listdir(os.getcwd()):
         current_id = len(doc_id)
-        doc_id.append({'id': current_id, 'url': site})
+        doc_id.append({'id': current_id, 'url': domain + '/' + site})
         words_file = parse_json(site)
         tf_dict = process_words(words_file)
         process_tf_dict(tf_dict, current_id)
     os.chdir('..')
 
+# takes the tf dict associated with a document_id. Puts all the words of that
+# document into the cumulative inverted index
 def process_tf_dict(tf: dict, doc_id: int):
     for word in tf:
-        if word in inverted_index:
-            inverted_index[word].append(posting_dict(doc_id, tf[word]))
-        else:
-            inverted_index[word] = [posting_dict(doc_id, tf[word])]
+        if word in inverted_index: inverted_index[word][doc_id] = tf[word]
+        else: inverted_index[word] = {doc_id: tf[word]}
 
+# includes only the document id as a key and it's term-frequency
 def posting_dict(doc_id: int, tf: float) -> dict:
-    return {"id": doc_id, "tf": tf}
+    return {doc_id: tf}
 
+# processes the entire dev file given to us
 def process_dev():
     os.chdir("/Users/bryanly/Documents/UCI Brilliant Future/CS 121/cs121-ast3/DEV")
-    #os.chdir("/Users/kingsleyszeto/Documents/GitHub/cs121-ast3/DEV")
+    # os.chdir("/Users/kingsleyszeto/Documents/GitHub/cs121-ast3/DEV")
+    partial_index_count = 1
     for f in os.listdir(os.getcwd()):
         if os.path.isdir(f): process_directory(f)
-        break
+        if len(inverted_index) > 200000:
+            write_partial_index(partial_index_count)
+            partial_index_count += 1
+    write_partial_index(partial_index_count)
 
+        
+# prints the inverted index with clean indentation
 def clean_print():
     for word in inverted_index:
         print(word)
@@ -74,13 +86,65 @@ def clean_print():
 
 # sorts and writes partial index to a file and clears the dictionary
 def write_partial_index(partial_index_count: int):
-    with open("indexes/partial_index" + str(partial_index_count) + ".txt", "a") as f:
-        f.write("{")
-        for word in sorted(inverted_index):
-            f.write("\'" + word + "\': " + str(inverted_index[word]) + ",\n")
-        f.write("}")
-    partial_index_count += 1
+    with open("../indexes/partial_index" + str(partial_index_count) + ".txt", "w") as file:
+        file.write(str(inverted_index))
     inverted_index.clear()
+
+def run_partial_index_creation():
+    # deletes the contents of indexes/ before running
+    temp_index_count = 1
+    while(os.path.exists("indexes/inverted_index" + str(temp_index_count) + ".txt")):
+        os.remove("indexes/inverted_index" + str(temp_index_count) + ".txt")
+        temp_index_count += 1
+
+    temp_partial_index_count = 1
+    while(os.path.exists("indexes/partial_index" + str(temp_partial_index_count) + ".txt")):
+        os.remove("indexes/partial_index" + str(temp_partial_index_count) + ".txt")
+        temp_partial_index_count += 1
+
+    # deletes word_index before running
+    if os.path.exists("word_index.txt"):
+        os.remove("word_index.txt")
+
+    process_dev()
+    os.chdir('..')
+
+    with open("doc_id.txt", "w") as f:
+        f.write(str(doc_id))
+
+# merges all the partial indicies into a set of alphabetically organized indices
+def merge_index():
+    partial_index_list = get_indices()
+    for letter in LETTERS:
+        print(letter)
+        letter_index = make_full_letter_index(letter, partial_index_list)
+        with open("indexes/inverted_index" + letter + ".txt", "w") as file:
+            file.write(str(letter_index))
+
+
+# makes and index of all words starting with the passed letter
+def make_full_letter_index(letter: str, partial_index_list: list):
+    letter_index = {}
+    for partial_index in partial_index_list:
+        print(partial_index)
+        letter_index.update(make_partial_letter_index(letter, partial_index))
+    return letter_index
+
+# makes an index of all words in the given partial index starting with the passed letter
+def make_partial_letter_index(letter: str, partial_index: str):
+    partial_letter_index = {}
+    with open(partial_index, "r") as file:
+        temp_index = eval(file.read())
+    
+    if letter != "":
+        for word in [key for key in temp_index.keys() if key.startswith(letter)]:
+            partial_letter_index[word] = temp_index[word]
+    else:
+        for word in [key for key in temp_index.keys() if key[:1] not in LETTERS]:
+            partial_letter_index[word] = temp_index[word]
+
+    return partial_letter_index
+
 
 # returns a list of the paths to all the partial indices
 def get_indices():
@@ -91,52 +155,5 @@ def get_indices():
         temp_partial_index_count += 1
     return indices
 
-# merges all the partial indicies into a set of alphabetically organized indices
-def merge_index():
-    alphabetic_index = {}
-    partial_index_list = get_indices()
-
-def write_index():
-    index_count = 1
-    word_count = 1
-    word_index = {}
-    for index in inverted_index:
-        word_index[index] = (index_count, word_count)
-        temp = {}
-        temp[index] = inverted_index[index]
-        with open("indexes/inverted_index" + str(index_count) + ".txt", "a") as f:
-            f.write(str(temp) + "\n")
-        if os.path.getsize("indexes/inverted_index" + str(index_count) +".txt") > 50000000:
-            index_count += 1
-            word_count = 1
-        else:
-            word_count += 1
-    
-    with open("word_index.txt", "a") as f:
-        f.write("{")
-        for word in word_index:
-            f.write("\'" + word + "\': " + str(word_index[word]) + ",\n")
-        f.write("}")  
-
-
-# deletes the contents of indexes/ before running
-temp_index_count = 1
-while(os.path.exists("indexes/inverted_index" + str(temp_index_count) + ".txt")):
-    os.remove("indexes/inverted_index" + str(temp_index_count) + ".txt")
-    temp_index_count += 1
-
-temp_partial_index_count = 1
-while(os.path.exists("indexes/partial_index" + str(temp_partial_index_count) + ".txt")):
-    os.remove("indexes/partial_index" + str(temp_partial_index_count) + ".txt")
-    temp_partial_index_count += 1
-
-# deletes word_index before running
-if os.path.exists("word_index.txt"):
-    os.remove("word_index.txt")
-
-process_dev()
-os.chdir('..')
-with open("doc_id.txt", "w") as f:
-    f.write(str(doc_id))
-
-write_index()
+# run_partial_index_creation()
+merge_index()
