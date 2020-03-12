@@ -33,7 +33,12 @@ def parse_json(path) -> str:
     for tag in soup.find_all(['script', 'style']):
         tag.extract()
     file_content = soup.get_text(" ")
-    return file_content
+
+    # find text within tags with higher weight
+    weighted_content = soup.find_all(['h1', 'h2', 'h3', 'b', 'a'], text=True)
+    weighted_content = ' '.join([e.string for e in weighted_content])
+
+    return file_content + " " + weighted_content
 
 # process the directory of the dev file
 def process_directory(domain: str):
@@ -87,10 +92,6 @@ def write_partial_index(partial_index_count: int):
 
 def run_partial_index_creation():
     # deletes the contents of indexes/ before running
-    temp_index_count = 1
-    while(os.path.exists("indexes/inverted_index" + str(temp_index_count) + ".txt")):
-        os.remove("indexes/inverted_index" + str(temp_index_count) + ".txt")
-        temp_index_count += 1
 
     temp_partial_index_count = 1
     while(os.path.exists("indexes/partial_index" + str(temp_partial_index_count) + ".txt")):
@@ -109,12 +110,18 @@ def run_partial_index_creation():
 
 # merges all the partial indicies into a set of alphabetically organized indices
 def merge_index():
+    #clear existing inverted index files
+    for letter in LETTERS:
+        if(os.path.exists("indexes/inverted_index" + letter + ".txt")):
+            os.remove("indexes/inverted_index" + letter + ".txt")
+
     partial_index_list = get_indices()
     for letter in LETTERS:
         print(letter)
         letter_index = make_full_letter_index(letter, partial_index_list)
-        with open("indexes/inverted_index" + letter + ".txt", "w") as file:
-            file.write(str(letter_index))
+        with open("indexes/inverted_index" + letter + ".txt", "w") as open_file:
+            for word in letter_index:
+                print("{" + word + ": " + str(letter_index[word]) + "}", file=open_file)
 
 
 # makes and index of all words starting with the passed letter
@@ -151,4 +158,4 @@ def get_indices():
     return indices
 
 # run_partial_index_creation()
-merge_index()
+# merge_index()
