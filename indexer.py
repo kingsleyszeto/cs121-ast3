@@ -12,7 +12,7 @@ import pprint
 LETTERS = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", ""]
 doc_id = []
 inverted_index = {}
-hashed = SimhashIndex([], k=0)
+hashed = SimhashIndex([], k=1)
 porter = PorterStemmer()
 
 # returns a list of tf's for each word in the document
