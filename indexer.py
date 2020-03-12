@@ -48,7 +48,7 @@ def parse_json(path) -> str:
     # file_content = soup.find_all(['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'a', 'title', 'span'], text=True)
     # file_content = ' '.join([e.string for e in file_content])
     # file_content = ' '.join([e.string for e in soup.recursiveChildGenerator() if isinstance(e, str)])
-    for tag in soup.find_all(['script', 'style']):
+    for tag in soup.find_all(['script', 'style', 'input']):
         tag.extract()
     file_content = soup.get_text(" ")
 
