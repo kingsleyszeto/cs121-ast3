@@ -143,7 +143,7 @@ def merge_index():
         letter_index = make_full_letter_index(letter, partial_index_list)
         with open("indexes/inverted_index" + letter + ".txt", "w") as open_file:
             for word in letter_index:
-                print("{\'" + word + "\': " + str(letter_index[word]) + "}", file=open_file)
+                print("{\"" + word + "\": " + str(letter_index[word]) + "}", file=open_file)
 
 
 # makes and index of all words starting with the passed letter
