@@ -1,3 +1,4 @@
+from simhash import Simhash, SimhashIndex       #from https://github.com/leonsim/simhash
 from nltk.stem.porter import PorterStemmer
 from nltk.tokenize import word_tokenize
 from bs4 import BeautifulSoup
@@ -11,6 +12,7 @@ import pprint
 LETTERS = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", ""]
 doc_id = []
 inverted_index = {}
+hashed = SimhashIndex([], k=0)
 porter = PorterStemmer()
 
 # returns a list of tf's for each word in the document
@@ -49,12 +51,16 @@ def parse_json(path) -> str:
 def process_directory(domain: str):
     print(domain)
     os.chdir(os.getcwd() + "/" + domain)
+
     for site in os.listdir(os.getcwd()):
         current_id = len(doc_id)
         doc_id.append({'id': current_id, 'url': domain + '/' + site})
         words_file = parse_json(site)
-        tf_dict = process_words(words_file)
-        process_tf_dict(tf_dict, current_id)
+        simhashed_words = Simhash(words_file)
+        if len(hashed.get_near_dups(simhashed_words)) <= 0:
+            hashed.add(site, simhashed_words)
+            tf_dict = process_words(words_file)
+            process_tf_dict(tf_dict, current_id)
     os.chdir('..')
 
 # takes the tf dict associated with a document_id. Puts all the words of that
@@ -126,7 +132,7 @@ def merge_index():
         letter_index = make_full_letter_index(letter, partial_index_list)
         with open("indexes/inverted_index" + letter + ".txt", "w") as open_file:
             for word in letter_index:
-                print("{" + word + ": " + str(letter_index[word]) + "}", file=open_file)
+                print("{\'" + word + "\': " + str(letter_index[word]) + "}", file=open_file)
 
 
 # makes and index of all words starting with the passed letter
