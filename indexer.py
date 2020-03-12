@@ -38,7 +38,12 @@ def parse_json(path) -> str:
     for tag in soup.find_all(['script', 'style']):
         tag.extract()
     file_content = soup.get_text(" ")
-    return file_content
+
+    # find text within tags with higher weight
+    weighted_content = soup.find_all(['h1', 'h2', 'h3', 'b', 'a'], text=True)
+    weighted_content = ' '.join([e.string for e in weighted_content])
+
+    return file_content + " " + weighted_content
 
 # process the directory of the dev file
 def process_directory(domain: str):
@@ -158,4 +163,4 @@ def get_indices():
     return indices
 
 # run_partial_index_creation()
-merge_index()
+# merge_index()
