@@ -12,7 +12,7 @@ import pprint
 LETTERS = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", ""]
 doc_id = []
 inverted_index = {}
-hashed = SimhashIndex([], k=0)
+hashed = SimhashIndex([], k=1)
 porter = PorterStemmer()
 
 # returns a list of tf's for each word in the document
@@ -20,9 +20,20 @@ def process_words(document: str) -> dict:
     document = word_tokenize(document.lower())
     stemmed_words = [porter.stem(word) for word in document]
     tf = {}
+    previous_word1 = ""
+    previous_word2 = ""
     for word in stemmed_words:
         if word in tf: tf[word] += 1 
         else: tf[word] = 1
+        # create n-grams
+        if not previous_word1 is "":
+            if ' '.join([previous_word1, word]) in tf: tf[' '.join([previous_word1, word])] += 1
+            else: tf[' '.join([previous_word1, word])] = 1
+        if not previous_word2 is "":
+            if ' '.join([previous_word2, previous_word1, word]) in tf: tf[' '.join([previous_word2, previous_word1, word])] += 1
+            else: tf[' '.join([previous_word2, previous_word1, word])] = 1
+        previous_word2 = previous_word1
+        previous_word1 = word
     for word in tf: tf[word] = math.log(tf[word]) + 1
     return tf
 
@@ -127,7 +138,7 @@ def merge_index():
         letter_index = make_full_letter_index(letter, partial_index_list)
         with open("indexes/inverted_index" + letter + ".txt", "w") as open_file:
             for word in letter_index:
-                print("{\'" + word + "\': " + str(letter_index[word]) + "}", file=open_file)
+                print("{\"" + word + "\": " + str(letter_index[word]) + "}", file=open_file)
 
 
 # makes and index of all words starting with the passed letter
