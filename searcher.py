@@ -16,7 +16,7 @@ with open("doc_id.txt") as doc_id_txt:
     line = doc_id_txt.readline()
     doc_ids = eval(line)
 total_docs = len(doc_ids)
-
+print("DOCS",total_docs)
 # takes in a file path and reads the inverted index 
 def read_inverted(file_path: str):
     with open(file_path) as index:
@@ -31,7 +31,7 @@ def read_inverted(file_path: str):
 
 os.chdir('indexes')
 for f in os.listdir(os.getcwd()):
-    if os.path.splitext(f)[1] == '.txt':
+    if os.path.splitext(f)[1] == '.txt' and 'inverted_index' in f:
         read_inverted(os.path.abspath(f))
 os.chdir('..')
 
@@ -44,14 +44,25 @@ def search(term : str) -> list:
     terms, query_vect = mod_query_vector(terms)
     relevant_indexes = {word: joined_index[word] for word in terms}
     vectors = create_doc_tfidf_matrix(terms, relevant_indexes)
+    vectors = get_best_quartile(vectors)
     print(vectors)
+    # return sorted(vectors, key=lambda x: -vectors[x])[0:10]
     query_vect = normalize(query_vect)
     vectors = {document: normalize(vectors[document]) for document in vectors}
     cosine_rank = cosine_ranking(query_vect, vectors)
-    ten_cosine = sorted(cosine_rank, key=lambda x: -cosine_rank[x])
-    return cosine_rank[0:10 if len(cosine_rank) >= 10 else len(cosine_rank)]
+    cos_best = sorted(cosine_rank, key = lambda x: -cosine_rank[x])
+    return cos_best[0:10]
     # rankings = sorted(rankings, key=lambda x: -rankings[x])
     # return rankings[0:10 if len(rankings) >= 10 else len(rankings)]
+
+def get_best_quartile(vector):
+    sum_vector = {doc: sum(vector[doc]) for doc in vector}
+    best = sorted(sum_vector, key=lambda x: -sum_vector[x])
+    extract = math.floor(len(sum_vector) / 4) if math.floor(len(sum_vector) / 4) >= 10 else len(sum_vector)
+    if extract > 1000:
+        extract = 1000
+    best = best[0:extract + 1]
+    return {doc: sum_vector[doc] for doc in best}
 
 def normalize(vector):
     vector = np.array(vector, dtype=float)
@@ -78,13 +89,15 @@ def cosine_ranking(query_vector: dict, vector: dict):
 def create_doc_tfidf_matrix(terms: list, inverted_index: dict) -> dict:
     vector = {} #dictionary - documents are keys, tf-idf expressed as a list initially
     for i in range(len(terms)):
+        df = len(inverted_index[terms[i]])
+        print(terms[i], df)
         for document in inverted_index[terms[i]]:
             if document in vector and document in inverted_index[terms[i]]:
-                vector[document][i] = inverted_index[terms[i]][document]
+                vector[document][i] = calculate_TFIDF(inverted_index[terms[i]][document], df)
             else: 
                 vector[document] = [0 for _ in terms]
                 if document in inverted_index[terms[i]]:
-                    vector[document][i] = inverted_index[terms[i]][document]
+                    vector[document][i] = calculate_TFIDF(inverted_index[terms[i]][document], df)
     return vector
     
     
@@ -145,8 +158,11 @@ while True:
     searcher = input("INPUT A SEARCH QUERY:\t")
     t1 = time.time()
     if searcher == "get me out of this purgatory": quit()
-    links = search(searcher)
-    links = process_links(links)
+    try:
+        links = search(searcher)
+        links = process_links(links)
+    except:
+        print('\tNO RESULTS FOR THE QUERY')
     t2 = time.time()
     print('\n\tShowing the top', len(links),'results for:', searcher)
     for link in links:
