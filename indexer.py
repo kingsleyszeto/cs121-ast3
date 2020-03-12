@@ -65,8 +65,8 @@ def posting_dict(doc_id: int, tf: float) -> dict:
 
 # processes the entire dev file given to us
 def process_dev():
-    os.chdir("/Users/bryanly/Documents/UCI Brilliant Future/CS 121/cs121-ast3/DEV")
-    # os.chdir("/Users/kingsleyszeto/Documents/GitHub/cs121-ast3/DEV")
+    # os.chdir("/Users/bryanly/Documents/UCI Brilliant Future/CS 121/cs121-ast3/DEV")
+    os.chdir("/Users/kingsleyszeto/Documents/GitHub/cs121-ast3/DEV")
     partial_index_count = 1
     for f in os.listdir(os.getcwd()):
         if os.path.isdir(f): process_directory(f)
@@ -157,5 +157,5 @@ def get_indices():
         temp_partial_index_count += 1
     return indices
 
-# run_partial_index_creation()
-# merge_index()
+run_partial_index_creation()
+merge_index()

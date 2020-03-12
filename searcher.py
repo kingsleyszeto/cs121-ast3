@@ -10,16 +10,12 @@ import time
 # tracker global variables
 porter = PorterStemmer()
 joined_index = {}
-joined_indicies = set()
-word_index, doc_ids = None, None
-with open("word_index.txt") as word:
-    line = word.readline()
-    word_index = eval(line)      #change once this is not just one big file
+doc_ids = None
 
 with open("doc_id.txt") as doc_id_txt:
     line = doc_id_txt.readline()
     doc_ids = eval(line)
-total_docs = len(word_index)
+total_docs = len(doc_ids)
 
 # takes in a file path and reads the inverted index 
 def read_inverted(file_path: str):
@@ -48,6 +44,7 @@ def search(term : str) -> list:
     terms, query_vect = mod_query_vector(terms)
     relevant_indexes = {word: joined_index[word] for word in terms}
     vectors = create_doc_tfidf_matrix(terms, relevant_indexes)
+    print(vectors)
     query_vect = normalize(query_vect)
     vectors = {document: normalize(vectors[document]) for document in vectors}
     cosine_rank = cosine_ranking(query_vect, vectors)
