@@ -30,11 +30,6 @@ def parse_json(path) -> str:
     with open(path, "r") as read_file: 
         file = json.load(read_file)
     soup = BeautifulSoup(file["content"], "lxml")
-
-    # single string containing all the text within the html
-    # file_content = soup.find_all(['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'a', 'title', 'span'], text=True)
-    # file_content = ' '.join([e.string for e in file_content])
-    # file_content = ' '.join([e.string for e in soup.recursiveChildGenerator() if isinstance(e, str)])
     for tag in soup.find_all(['script', 'style']):
         tag.extract()
     file_content = soup.get_text(" ")
