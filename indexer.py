@@ -20,9 +20,20 @@ def process_words(document: str) -> dict:
     document = word_tokenize(document.lower())
     stemmed_words = [porter.stem(word) for word in document]
     tf = {}
+    previous_word1 = ""
+    previous_word2 = ""
     for word in stemmed_words:
         if word in tf: tf[word] += 1 
         else: tf[word] = 1
+        # create n-grams
+        if not previous_word1 is "":
+            if ' '.join([previous_word1, word]) in tf: tf[' '.join([previous_word1, word])] += 1
+            else: tf[' '.join([previous_word1, word])] = 1
+        if not previous_word2 is "":
+            if ' '.join([previous_word2, previous_word1, word]) in tf: tf[' '.join([previous_word2, previous_word1, word])] += 1
+            else: tf[' '.join([previous_word2, previous_word1, word])] = 1
+        previous_word2 = previous_word1
+        previous_word1 = word
     for word in tf: tf[word] = math.log(tf[word]) + 1
     return tf
 
