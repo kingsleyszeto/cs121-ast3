@@ -26,7 +26,7 @@ with open("word_number.txt") as w_lines:
         letter = word[0]
         if letter not in "abcdefghijklmnopqrstuvwxyz":
             letter = ""
-        linecache.getline("indexes/inverted_index" + word[0] + ".txt", int(line))
+        # linecache.getline("indexes/inverted_index" + word[0] + ".txt", int(line))
 
 
 def retrieve_index(word):
@@ -49,21 +49,25 @@ def search(term : str) -> list:
     terms, query_vect = mod_query_vector(terms)
     relevant_indexes = {key: value for key, value in [retrieve_index(word) for word in terms]}
     vectors = create_doc_tfidf_matrix(terms, relevant_indexes)
-    vectors = get_best_quartile(vectors)
+    vectors, avg_max = get_best_quartile(vectors)
     query_vect = normalize(query_vect)
-    vectors = {document: normalize(vectors[document]) for document in vectors}
-    cosine_rank = cosine_ranking(query_vect, vectors)
-    cos_best = sorted(cosine_rank, key = lambda x: -cosine_rank[x])
-    return cos_best[0:10]
+    normed = {document: normalize(vectors[document]) for document in vectors}
+    cosine_rank = cosine_ranking(query_vect, normed)
+    rankings = {doc: cosine_rank[doc] * 0.60 + 0.40 * np.mean(vectors[doc]) / avg_max for doc in cosine_rank}
+    best = sorted(rankings, key=lambda x: -rankings[x])
+    print(best)
+    for vect in best[0:10]:
+        print(np.nanmean(vectors[vect]), cosine_rank[vect], rankings[vect])
+    return best[0:10]
 
 def get_best_quartile(vector):
-    sum_vector = {doc: sum(vector[doc]) for doc in vector}
+    sum_vector = {doc: np.mean(np.array(vector[doc])) for doc in vector}
     best = sorted(sum_vector, key=lambda x: -sum_vector[x])
     extract = math.floor(len(sum_vector) / 4) if math.floor(len(sum_vector) / 4) >= 10 else len(sum_vector)
     if extract > 500:
         extract = 500
     best = best[0:extract + 1]
-    return {doc: vector[doc] for doc in best}
+    return {doc: vector[doc] for doc in best}, np.mean(vector[best[0]])
 
 def normalize(vector):
     vector = np.array(vector, dtype=float)
@@ -79,7 +83,7 @@ def mod_query_vector(query: list) -> tuple:
         else: q_vect[query_set_list.index(term)] = 1
     return query_set_list, np.array(q_vect)
 
-# returns a dictionary based on the cosine ranking value, takes in normalized vectors
+# returns a dictioary based on the cosine ranking value, takes in normalized vectors
 # NORMALIZE VECTORS BEFORE USING
 def cosine_ranking(query_vector: dict, vector: dict):
     return {document: np.nansum(query_vector * vector[document]) for document in vector}
@@ -143,9 +147,11 @@ def show_search(gui, links, label_list, query):
     row_index = 1
     for link in links:
         label_list[row_index].configure(text=get_url(link))
+        print(get_url(link))
         row_index += 1
     for i in range(row_index, 12):
         label_list[i].configure(text="")
+    print()
 
 def grid_list(label_list):
     count = 1
@@ -157,18 +163,18 @@ def grid_list(label_list):
 def make_gui():
 
     def perform_search():
-        try:
-            t1 = time.time()
-            search_query = gui_search.get()
-            links = search(search_query)
-            t2 = time.time()
-            links = process_links(links)
-            show_search(gui, links, label_list, search_query)
-            label_list[11].configure(text=str(t2-t1))
-        except:
-            for label in label_list:
-                label.configure(text="")
-            label_list[0].configure(text="NO RESULTS FOUND")
+        # try:
+        t1 = time.time()
+        search_query = gui_search.get()
+        links = search(search_query)
+        t2 = time.time()
+        links = process_links(links)
+        show_search(gui, links, label_list, search_query)
+        label_list[11].configure(text=str(t2-t1) + " Seconds")
+        # except:
+        #     for label in label_list:
+        #         label.configure(text="")
+        #     label_list[0].configure(text="NO RESULTS FOUND")
 
     gui = tkinter.Tk()
     gui.geometry("500x320")
