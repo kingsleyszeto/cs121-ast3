@@ -20,33 +20,17 @@ total_docs = len(doc_ids)
 
 with open("word_number.txt") as w_lines:
     for line in w_lines.readlines():
-        terms = line.split()
-        words[terms[0]] = int(terms[1])
+        word, line = tuple(line.split())
+        words[word] = int(line)
+        letter = word[0]
+        if letter not in "abcdefghijklmnopqrstuvwxyz":
+            letter = ""
+        linecache.getline("indexes/inverted_index" + word[0] + ".txt", int(line))
 
-# # takes in a file path and reads the inverted index 
-# def read_inverted(file_path: str):
-#     with open(file_path) as index:
-#         for line in index.readlines():
-#             line = line.rstrip()
-#             try:
-#                 temp = eval(line)       #everyline has a dictionary
-#                 key = list(temp.keys())[0]
-#                 value = temp[key]
-#                 if key in joined_index:
-#                     joined_index[key].extend(value)
-#                 else:
-#                     joined_index[key] = value
-#             except:
-#                 print(line)
-
-# os.chdir('indexes')
-# for f in os.listdir(os.getcwd()):
-#     if os.path.splitext(f)[1] == '.txt' and 'inverted_index' in f:
-#         read_inverted(os.path.abspath(f))
-# os.chdir('..')
 
 def retrieve_index(word):
     # get inverted_index folder
+    if word not in words: raise ValueError
     letter = word[0]
     if letter not in "abcdefghijklmnopqrstuvwxyz":
         letter = ""
@@ -63,7 +47,6 @@ def search(term : str) -> list:
     terms = [porter.stem(word) for word in word_tokenize(term.lower())]
     terms, query_vect = mod_query_vector(terms)
     relevant_indexes = {key: value for key, value in [retrieve_index(word) for word in terms]}
-    # relevant_indexes = {word: joined_index[word] for word in terms}
     vectors = create_doc_tfidf_matrix(terms, relevant_indexes)
     vectors = get_best_quartile(vectors)
     query_vect = normalize(query_vect)
@@ -156,9 +139,9 @@ def get_url(path: str):
 searcher = ""
 while True:
     searcher = input("INPUT A SEARCH QUERY:\t")
-    t1 = time.time()
-    if searcher == "get me out of this purgatory": quit()
+    if searcher == "QUIT SEARCHER": quit()
     try:
+        t1 = time.time()
         links = search(searcher)
         t2 = time.time()
         links = process_links(links)
