@@ -160,8 +160,8 @@ while True:
     if searcher == "get me out of this purgatory": quit()
     try:
         links = search(searcher)
-        links = process_links(links)
         t2 = time.time()
+        links = process_links(links)
         print('\n\tShowing the top', len(links),'results for:', searcher)
         for link in links:
             print('\t', get_url(link))
