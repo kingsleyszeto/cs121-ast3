@@ -10,6 +10,7 @@ import math
 import pprint
 
 LETTERS = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", ""]
+
 doc_id = []
 inverted_index = {}
 hashed = SimhashIndex([], k=1)
@@ -83,15 +84,15 @@ def posting_dict(doc_id: int, tf: float) -> dict:
 
 # processes the entire dev file given to us
 def process_dev():
-    # os.chdir("/Users/bryanly/Documents/UCI Brilliant Future/CS 121/cs121-ast3/DEV")
-    os.chdir("/Users/kingsleyszeto/Documents/GitHub/cs121-ast3/DEV")
+    os.chdir("/Users/bryanly/Documents/UCI Brilliant Future/CS 121/cs121-ast3/DEV")
+    #os.chdir("/Users/kingsleyszeto/Documents/GitHub/cs121-ast3/DEV")
     partial_index_count = 1
     for f in os.listdir(os.getcwd()):
         if os.path.isdir(f): process_directory(f)
         if len(inverted_index) > 200000:
             write_partial_index(partial_index_count)
             partial_index_count += 1
-    write_partial_index(partial_index_count)
+    if len(inverted_index) > 0: write_partial_index(partial_index_count)
 
         
 # prints the inverted index with clean indentation
@@ -132,14 +133,26 @@ def merge_index():
     for letter in LETTERS:
         if(os.path.exists("indexes/inverted_index" + letter + ".txt")):
             os.remove("indexes/inverted_index" + letter + ".txt")
+    if(os.path.exists("word_number.txt")):
+            os.remove("word_number.txt")
 
     partial_index_list = get_indices()
     for letter in LETTERS:
         print(letter)
         letter_index = make_full_letter_index(letter, partial_index_list)
         with open("indexes/inverted_index" + letter + ".txt", "w") as open_file:
+            word_line = 1
             for word in letter_index:
-                print("{\"" + word + "\": " + str(letter_index[word]) + "}", file=open_file)
+                if word.endswith("\\"):
+                    print("{\"" + word + "\\" + "\": " + str(letter_index[word]) + "}", file=open_file)
+                else:
+                    print("{\"" + word + "\": " + str(letter_index[word]) + "}", file=open_file)
+                with open("word_number.txt", "a") as word_number:
+                    if word.endswith("\\"):
+                        print(word + "\\" + " " + str(word_line), file=word_number)
+                    else:
+                        print(word + " " + str(word_line), file=word_number)
+                word_line += 1
 
 
 # makes and index of all words starting with the passed letter
@@ -175,5 +188,5 @@ def get_indices():
         temp_partial_index_count += 1
     return indices
 
-run_partial_index_creation()
-merge_index()
+#run_partial_index_creation()
+#merge_index()
