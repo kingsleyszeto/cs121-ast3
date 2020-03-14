@@ -26,7 +26,7 @@ with open("word_number.txt") as w_lines:
         letter = word[0]
         if letter not in "abcdefghijklmnopqrstuvwxyz":
             letter = ""
-        # linecache.getline("indexes/inverted_index" + word[0] + ".txt", int(line))
+        linecache.getline("indexes/inverted_index" + word[0] + ".txt", int(line))
 
 
 def retrieve_index(word):
@@ -53,7 +53,12 @@ def search(term : str) -> list:
     query_vect = normalize(query_vect)
     normed = {document: normalize(vectors[document]) for document in vectors}
     cosine_rank = cosine_ranking(query_vect, normed)
-    rankings = {doc: cosine_rank[doc] * 0.60 + 0.40 * np.mean(vectors[doc]) / avg_max for doc in cosine_rank}
+    rankings = {}
+    for doc in cosine_rank:
+        if len(terms) < 3:
+            rankings[doc] = np.sum(vectors[doc])
+        else:
+            rankings[doc] = cosine_rank[doc] * 0.6 + 0.4 * np.mean(vectors[doc]) / avg_max
     best = sorted(rankings, key=lambda x: -rankings[x])
     print(best)
     for vect in best[0:10]:
@@ -103,27 +108,6 @@ def create_doc_tfidf_matrix(terms: list, inverted_index: dict) -> dict:
                 if document in inverted_index[terms[i]]:
                     vector[document][i] = calculate_TFIDF(inverted_index[terms[i]][document], df)
     return vector
-    
-    
-# return the intersection of the documents containing all the terms
-def intersect_documents(indexes: list):
-    if len(indexes) == 1:
-        return indexes
-    docu_set = [set(index) for index in indexes]
-    docu_intersect = set.intersection(*docu_set)
-    intersected = [{docu: tf for docu, tf in index.items() if docu in docu_intersect} for index in indexes]
-    return intersected
-
-# merges a list of dictionaries containing a document and a score
-def merge_rankings(doc_rankings: dict) -> dict:
-    docs = {}
-    for doc_dict in doc_rankings:
-        for document, ranking in doc_dict.items():
-            if document in docs:
-                docs[document] += ranking
-            else:
-                docs[document] = ranking
-    return docs
 
 # calculates the tfidf 
 def calculate_TFIDF(tf, df) -> float:
@@ -163,18 +147,18 @@ def grid_list(label_list):
 def make_gui():
 
     def perform_search():
-        # try:
-        t1 = time.time()
-        search_query = gui_search.get()
-        links = search(search_query)
-        t2 = time.time()
-        links = process_links(links)
-        show_search(gui, links, label_list, search_query)
-        label_list[11].configure(text=str(t2-t1) + " Seconds")
-        # except:
-        #     for label in label_list:
-        #         label.configure(text="")
-        #     label_list[0].configure(text="NO RESULTS FOUND")
+        try:
+            t1 = time.time()
+            search_query = gui_search.get()
+            links = search(search_query)
+            t2 = time.time()
+            links = process_links(links)
+            show_search(gui, links, label_list, search_query)
+            label_list[11].configure(text=str(t2-t1) + " Seconds")
+        except:
+            for label in label_list:
+                label.configure(text="")
+            label_list[0].configure(text="NO RESULTS FOUND")
 
     gui = tkinter.Tk()
     gui.geometry("500x320")
