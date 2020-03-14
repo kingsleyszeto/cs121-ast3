@@ -60,8 +60,8 @@ def get_best_quartile(vector):
     sum_vector = {doc: sum(vector[doc]) for doc in vector}
     best = sorted(sum_vector, key=lambda x: -sum_vector[x])
     extract = math.floor(len(sum_vector) / 4) if math.floor(len(sum_vector) / 4) >= 10 else len(sum_vector)
-    if extract > 1000:
-        extract = 1000
+    if extract > 500:
+        extract = 500
     best = best[0:extract + 1]
     return {doc: vector[doc] for doc in best}
 
