@@ -143,6 +143,7 @@ def show_search(gui, links, label_list, query):
     row_index = 1
     for link in links:
         label_list[row_index].configure(text=get_url(link))
+        print(get_url(link))
         row_index += 1
     for i in range(row_index, 12):
         label_list[i].configure(text="")
