@@ -153,20 +153,25 @@ def grid_list(label_list):
         label.grid(row=count, column=0, columnspan=2, sticky=tkinter.W)
         count += 1
 
-# creates the GUI
+# creates and launches the GUI
 def make_gui():
 
     def perform_search():
-        t1 = time.time()
-        search_query = gui_search.get()
-        links = search(search_query)
-        t2 = time.time()
-        links = process_links(links)
-        show_search(gui, links, label_list, search_query)
-        label_list[11].configure(text=str(t2-t1))
+        try:
+            t1 = time.time()
+            search_query = gui_search.get()
+            links = search(search_query)
+            t2 = time.time()
+            links = process_links(links)
+            show_search(gui, links, label_list, search_query)
+            label_list[11].configure(text=str(t2-t1))
+        except:
+            for label in label_list:
+                label.configure(text="")
+            label_list[0].configure(text="NO RESULTS FOUND")
 
     gui = tkinter.Tk()
-    gui.geometry("500x350")
+    gui.geometry("500x320")
 
     # create search bar
     tkinter.Button(gui, text="Search", command=perform_search).grid(row=0, column=0, sticky=tkinter.W)
@@ -180,25 +185,4 @@ def make_gui():
     
     gui.mainloop()
 
-
-# call to run the searcher
-def run_searcher():
-    searcher = ""
-    while True:
-        searcher = input("INPUT A SEARCH QUERY:\t")
-        if searcher == "QUIT SEARCHER": quit()
-        try:
-            t1 = time.time()
-            links = search(searcher)
-            t2 = time.time()
-            links = process_links(links)
-            print('\n\tShowing the top', len(links),'results for:', searcher)
-            for link in links:
-                print('\t', get_url(link))
-            print(t2 - t1)
-        except:
-            print('\tNO RESULTS FOR THE QUERY')
-        print('\n')
-
-# run_searcher()
 make_gui()
