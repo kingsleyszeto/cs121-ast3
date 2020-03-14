@@ -1,5 +1,6 @@
 from nltk.stem.porter import PorterStemmer
 from nltk.tokenize import word_tokenize
+import tkinter
 import math
 import json
 import numpy
@@ -136,19 +137,68 @@ def get_url(path: str):
         f = json.load(read_file)
     return f["url"]
 
-searcher = ""
-while True:
-    searcher = input("INPUT A SEARCH QUERY:\t")
-    if searcher == "QUIT SEARCHER": quit()
-    try:
+# put search results onto gui
+def show_search(gui, links, label_list, query):
+    label_list[0].configure(text="Showing the top " + str(len(links)) + " results for: " + query)
+    row_index = 1
+    for link in links:
+        label_list[row_index].configure(text=get_url(link))
+        row_index += 1
+    for i in range(row_index, 12):
+        label_list[i].configure(text="")
+
+def grid_list(label_list):
+    count = 1
+    for label in label_list:
+        label.grid(row=count, column=0, columnspan=2, sticky=tkinter.W)
+        count += 1
+
+# creates the GUI
+def make_gui():
+
+    def perform_search():
         t1 = time.time()
-        links = search(searcher)
+        search_query = gui_search.get()
+        links = search(search_query)
         t2 = time.time()
         links = process_links(links)
-        print('\n\tShowing the top', len(links),'results for:', searcher)
-        for link in links:
-            print('\t', get_url(link))
-        print(t2 - t1)
-    except:
-        print('\tNO RESULTS FOR THE QUERY')
-    print('\n')
+        show_search(gui, links, label_list, search_query)
+        label_list[11].configure(text=str(t2-t1))
+
+    gui = tkinter.Tk()
+    gui.geometry("500x350")
+
+    # create search bar
+    tkinter.Button(gui, text="Search", command=perform_search).grid(row=0, column=0, sticky=tkinter.W)
+    gui_search = tkinter.Entry(gui, width=48)
+    gui_search.grid(row=0, column = 1, sticky=tkinter.W)
+
+    label_list = []
+    for i in range(12):
+        label_list.append(tkinter.Label(gui, text=""))
+    grid_list(label_list)
+    
+    gui.mainloop()
+
+
+# call to run the searcher
+def run_searcher():
+    searcher = ""
+    while True:
+        searcher = input("INPUT A SEARCH QUERY:\t")
+        if searcher == "QUIT SEARCHER": quit()
+        try:
+            t1 = time.time()
+            links = search(searcher)
+            t2 = time.time()
+            links = process_links(links)
+            print('\n\tShowing the top', len(links),'results for:', searcher)
+            for link in links:
+                print('\t', get_url(link))
+            print(t2 - t1)
+        except:
+            print('\tNO RESULTS FOR THE QUERY')
+        print('\n')
+
+# run_searcher()
+make_gui()
