@@ -133,6 +133,8 @@ def merge_index():
     for letter in LETTERS:
         if(os.path.exists("indexes/inverted_index" + letter + ".txt")):
             os.remove("indexes/inverted_index" + letter + ".txt")
+    if(os.path.exists("word_number.txt")):
+            os.remove("word_number.txt")
 
     partial_index_list = get_indices()
     for letter in LETTERS:
