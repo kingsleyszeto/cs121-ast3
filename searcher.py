@@ -6,46 +6,64 @@ import numpy
 import os
 import numpy as np
 import time
+import linecache
 
 # tracker global variables
 porter = PorterStemmer()
-joined_index = {}
+words = {}
 doc_ids = None
 
 with open("doc_id.txt") as doc_id_txt:
     line = doc_id_txt.readline()
     doc_ids = eval(line)
 total_docs = len(doc_ids)
-# takes in a file path and reads the inverted index 
-def read_inverted(file_path: str):
-    with open(file_path) as index:
-        for line in index.readlines():
-            line = line.rstrip()
-            try:
-                temp = eval(line)       #everyline has a dictionary
-                key = list(temp.keys())[0]
-                value = temp[key]
-                if key in joined_index:
-                    joined_index[key].extend(value)
-                else:
-                    joined_index[key] = value
-            except:
-                print(line)
 
-os.chdir('indexes')
-for f in os.listdir(os.getcwd()):
-    if os.path.splitext(f)[1] == '.txt' and 'inverted_index' in f:
-        read_inverted(os.path.abspath(f))
-os.chdir('..')
+with open("word_number.txt") as w_lines:
+    for line in w_lines.readlines():
+        terms = line.split()
+        words[terms[0]] = int(terms[1])
+
+# # takes in a file path and reads the inverted index 
+# def read_inverted(file_path: str):
+#     with open(file_path) as index:
+#         for line in index.readlines():
+#             line = line.rstrip()
+#             try:
+#                 temp = eval(line)       #everyline has a dictionary
+#                 key = list(temp.keys())[0]
+#                 value = temp[key]
+#                 if key in joined_index:
+#                     joined_index[key].extend(value)
+#                 else:
+#                     joined_index[key] = value
+#             except:
+#                 print(line)
+
+# os.chdir('indexes')
+# for f in os.listdir(os.getcwd()):
+#     if os.path.splitext(f)[1] == '.txt' and 'inverted_index' in f:
+#         read_inverted(os.path.abspath(f))
+# os.chdir('..')
+
+def retrieve_index(word):
+    # get inverted_index folder
+    letter = word[0]
+    if letter not in "abcdefghijklmnopqrstuvwxyz":
+        letter = ""
+    inverted = linecache.getline("indexes/inverted_index" + letter + ".txt", words[word])
+    inverted = eval(inverted)
+    key = list(inverted.keys())[0]
+    value = inverted[key]
+    return key, value
 
 # looks at the "partial" inverted index, returns a list of dictionaries
 # if the word exists, else None
 # returns up to 10 URLs/Filepaths
 def search(term : str) -> list:
     terms = [porter.stem(word) for word in word_tokenize(term.lower())]
-    # relevant_indexes = intersect_documents([joined_index[word] for word in terms])
     terms, query_vect = mod_query_vector(terms)
-    relevant_indexes = {word: joined_index[word] for word in terms}
+    relevant_indexes = {key: value for key, value in [retrieve_index(word) for word in terms]}
+    # relevant_indexes = {word: joined_index[word] for word in terms}
     vectors = create_doc_tfidf_matrix(terms, relevant_indexes)
     vectors = get_best_quartile(vectors)
     query_vect = normalize(query_vect)
@@ -53,8 +71,6 @@ def search(term : str) -> list:
     cosine_rank = cosine_ranking(query_vect, vectors)
     cos_best = sorted(cosine_rank, key = lambda x: -cosine_rank[x])
     return cos_best[0:10]
-    # rankings = sorted(rankings, key=lambda x: -rankings[x])
-    # return rankings[0:10 if len(rankings) >= 10 else len(rankings)]
 
 def get_best_quartile(vector):
     sum_vector = {doc: sum(vector[doc]) for doc in vector}
@@ -110,14 +126,6 @@ def intersect_documents(indexes: list):
     intersected = [{docu: tf for docu, tf in index.items() if docu in docu_intersect} for index in indexes]
     return intersected
 
-# # returns the ranking of the documents being passed through
-# def ranking(docs_tf: list) -> list:
-#     rankings = {}
-#     n_docs_term = len(docs_tf)
-#     for document, tf in docs_tf.items():
-#         rankings[document] = calculate_TFIDF(tf, n_docs_term)
-#     return rankings
-
 # merges a list of dictionaries containing a document and a score
 def merge_rankings(doc_rankings: dict) -> dict:
     docs = {}
@@ -145,14 +153,6 @@ def get_url(path: str):
         f = json.load(read_file)
     return f["url"]
 
-# prints the inverted index in a clean manner
-def clean_print():
-    for word in joined_index:
-        print(word)
-        for posting in joined_index[word]:
-            print('\t', end = "")
-            print(posting)
-
 searcher = ""
 while True:
     searcher = input("INPUT A SEARCH QUERY:\t")
@@ -160,8 +160,8 @@ while True:
     if searcher == "get me out of this purgatory": quit()
     try:
         links = search(searcher)
-        links = process_links(links)
         t2 = time.time()
+        links = process_links(links)
         print('\n\tShowing the top', len(links),'results for:', searcher)
         for link in links:
             print('\t', get_url(link))
