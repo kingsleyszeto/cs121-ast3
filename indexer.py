@@ -9,8 +9,8 @@ import os
 import math
 import pprint
 
-# LETTERS = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", ""]
-LETTERS = [""]
+LETTERS = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", ""]
+
 doc_id = []
 inverted_index = {}
 hashed = SimhashIndex([], k=1)
@@ -139,11 +139,18 @@ def merge_index():
         print(letter)
         letter_index = make_full_letter_index(letter, partial_index_list)
         with open("indexes/inverted_index" + letter + ".txt", "w") as open_file:
+            word_line = 1
             for word in letter_index:
                 if word.endswith("\\"):
                     print("{\"" + word + "\\" + "\": " + str(letter_index[word]) + "}", file=open_file)
                 else:
                     print("{\"" + word + "\": " + str(letter_index[word]) + "}", file=open_file)
+                with open("word_number.txt", "a") as word_number:
+                    if word.endswith("\\"):
+                        print(word + "\\" + " " + str(word_line), file=word_number)
+                    else:
+                        print(word + " " + str(word_line), file=word_number)
+                word_line += 1
 
 
 # makes and index of all words starting with the passed letter
@@ -180,4 +187,4 @@ def get_indices():
     return indices
 
 #run_partial_index_creation()
-# merge_index()
+#merge_index()
